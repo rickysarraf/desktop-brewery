@@ -9,7 +9,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ARG USER_NAME=rrs
-RUN useradd -m -u 1000 -s /bin/bash $USER_NAME && echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME
+# Ubuntu Noble images often have a 'ubuntu' user at 1000. We'll reuse or replace.
+RUN if id -u 1000 >/dev/null 2>&1; then \
+        existing_user=$(id -nu 1000); \
+        if [ "$existing_user" != "$USER_NAME" ]; then \
+            usermod -l $USER_NAME $existing_user; \
+            groupmod -n $USER_NAME $(id -ng $USER_NAME); \
+            usermod -d /home/$USER_NAME -m $USER_NAME; \
+        fi; \
+    else \
+        useradd -m -u 1000 -s /bin/bash $USER_NAME; \
+    fi && \
+    echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
 CMD ["/usr/bin/gnome-session"]

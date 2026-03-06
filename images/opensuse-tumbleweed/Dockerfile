@@ -5,7 +5,13 @@ RUN zypper --non-interactive install --no-recommends \
     patterns-kde-kde_plasma konsole dolphin && \
     zypper clean --all
 ARG USER_NAME=rrs
-RUN useradd -m -u 1000 -s /bin/bash $USER_NAME && echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME
+# openSUSE images often have no user at 1000, but we'll be safe.
+RUN if id -u 1000 >/dev/null 2>&1; then \
+        usermod -l $USER_NAME $(id -nu 1000); \
+    else \
+        useradd -m -u 1000 -s /bin/bash $USER_NAME; \
+    fi && \
+    echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
 CMD ["/usr/bin/startplasma-wayland"]
