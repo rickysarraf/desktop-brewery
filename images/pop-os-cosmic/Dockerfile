@@ -4,8 +4,8 @@ RUN mkdir -p /etc/dpkg/dpkg.cfg.d/ && echo 'path-exclude /boot/*' > /etc/dpkg/dp
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && apt-get clean
 RUN mkdir -p /etc/apt/keyrings && \
-    curl -fsSL https://packagecloud.io/system76/pop/gpgkey | gpg --dearmor -o /etc/apt/keyrings/system76-pop.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/system76-pop.gpg] http://ppa.launchpad.net/system76/pop/ubuntu noble main" > /etc/apt/sources.list.d/system76-pop.list
+    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x871920D1991BC93C" | gpg --dearmor -o /etc/apt/keyrings/hepp3n-cosmic.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/hepp3n-cosmic.gpg] https://ppa.launchpadcontent.net/hepp3n/cosmic-epoch/ubuntu noble main" > /etc/apt/sources.list.d/hepp3n-cosmic.list
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     dbus-x11 locales libgl1-mesa-dri pipewire-audio procps sudo \

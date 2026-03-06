@@ -4,9 +4,8 @@ RUN mkdir -p /etc/dpkg/dpkg.cfg.d/ && echo 'path-exclude /boot/*' > /etc/dpkg/dp
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && apt-get clean
 RUN mkdir -p /etc/apt/keyrings && \
-    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xbf36996c4e1f1ceb9fd9d00689e6beb9feb33f56" | gpg --dearmor -o /etc/apt/keyrings/elementary.gpg || \
-    gpg --keyserver keyserver.ubuntu.com --recv-keys A74F0309 && \
-    echo "deb http://ppa.launchpad.net/elementary-os/stable/ubuntu noble main" > /etc/apt/sources.list.d/elementary.list
+    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x364837CF91E070910231C2FE8219B3A0AEF3D498" | gpg --dearmor -o /etc/apt/keyrings/elementary.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/elementary.gpg] https://ppa.launchpadcontent.net/elementary-os/stable/ubuntu noble main" > /etc/apt/sources.list.d/elementary.list
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     dbus-x11 locales libgl1-mesa-dri pipewire-audio procps sudo \
