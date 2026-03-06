@@ -2,10 +2,14 @@
 FROM ubuntu:noble
 RUN mkdir -p /etc/dpkg/dpkg.cfg.d/ && echo 'path-exclude /boot/*' > /etc/dpkg/dpkg.cfg.d/exclude-boot
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && apt-get clean
-RUN mkdir -p /etc/apt/keyrings && \
-    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x364837CF91E070910231C2FE8219B3A0AEF3D498" | gpg --dearmor -o /etc/apt/keyrings/elementary.gpg && \
-    echo "deb [signed-by=/etc/apt/keyrings/elementary.gpg] https://ppa.launchpadcontent.net/elementary-os/stable/ubuntu noble main" > /etc/apt/sources.list.d/elementary.list
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl gnupg software-properties-common && \
+    add-apt-repository -y main && \
+    add-apt-repository -y universe && \
+    add-apt-repository -y restricted && \
+    add-apt-repository -y multiverse && \
+    add-apt-repository -y ppa:elementary-os/stable && \
+    apt-get clean
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     dbus-x11 locales libgl1-mesa-dri pipewire-audio procps sudo \
