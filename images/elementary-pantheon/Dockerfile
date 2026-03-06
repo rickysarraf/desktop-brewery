@@ -2,13 +2,14 @@
 FROM ubuntu:noble
 RUN mkdir -p /etc/dpkg/dpkg.cfg.d/ && echo 'path-exclude /boot/*' > /etc/dpkg/dpkg.cfg.d/exclude-boot
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && \
-    mkdir -p /etc/apt/keyrings && \
-    echo "deb http://ppa.launchpad.net/elementary-os/stable/ubuntu noble main" > /etc/apt/sources.list.d/elementary.list && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A74F0309 && \
-    apt-get update && \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl gnupg && apt-get clean
+RUN mkdir -p /etc/apt/keyrings && \
+    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xbf36996c4e1f1ceb9fd9d00689e6beb9feb33f56" | gpg --dearmor -o /etc/apt/keyrings/elementary.gpg || \
+    gpg --keyserver keyserver.ubuntu.com --recv-keys A74F0309 && \
+    echo "deb http://ppa.launchpad.net/elementary-os/stable/ubuntu noble main" > /etc/apt/sources.list.d/elementary.list
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    ca-certificates curl dbus-x11 locales libgl1-mesa-dri pipewire-audio procps sudo \
+    dbus-x11 locales libgl1-mesa-dri pipewire-audio procps sudo \
     elementary-desktop io.elementary.terminal io.elementary.files && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN locale-gen en_US.UTF-8

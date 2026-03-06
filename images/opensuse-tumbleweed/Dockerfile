@@ -1,11 +1,10 @@
 # openSUSE Tumbleweed KDE
 FROM opensuse/tumbleweed
 RUN zypper --non-interactive install --no-recommends \
-    ca-certificates curl dbus-1-x11 Mesa-dri-drivers pipewire procps sudo \
+    ca-certificates curl dbus-1 Mesa-dri pipewire procps sudo \
     patterns-kde-kde_plasma konsole dolphin && \
     zypper clean --all
 ARG USER_NAME=rrs
-# openSUSE images often have no user at 1000, but we'll be safe.
 RUN if id -u 1000 >/dev/null 2>&1; then \
         usermod -l $USER_NAME $(id -nu 1000); \
     else \
