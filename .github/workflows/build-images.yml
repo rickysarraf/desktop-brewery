@@ -28,7 +28,7 @@ jobs:
           - name: debian-testing-kde
             context: ./images/debian-testing-kde
             image: desktop-debian-testing-kde
-            test_command: "/usr/bin/startplasma-wayland --version"
+            test_command: "dbus-run-session -- /usr/bin/startplasma-wayland --version"
           - name: debian-sid-gnome
             context: ./images/debian-sid-gnome
             image: desktop-debian-sid-gnome
@@ -40,11 +40,11 @@ jobs:
           - name: pop-os-cosmic
             context: ./images/pop-os-cosmic
             image: desktop-pop-os-cosmic
-            test_command: "ls -F /usr/bin/cosmic* /usr/bin/start-cosmic"
+            test_command: "find /usr/bin /usr/lib -name '*cosmic*' -executable || ls -F /usr/bin/cosmic*"
           - name: elementary-pantheon
             context: ./images/elementary-pantheon
             image: desktop-elementary-pantheon
-            test_command: "ls -F /usr/bin/io.elementary.* /usr/bin/pantheon*"
+            test_command: "find /usr/bin /usr/lib -name '*session*' -executable || ls -F /usr/bin/io.elementary.* /usr/bin/pantheon*"
           - name: fedora-cosmic
             context: ./images/fedora-cosmic
             image: desktop-fedora-cosmic
@@ -52,11 +52,11 @@ jobs:
           - name: opensuse-tumbleweed
             context: ./images/opensuse-tumbleweed
             image: desktop-opensuse-tumbleweed
-            test_command: "/usr/bin/startplasma-wayland --version"
+            test_command: "dbus-run-session -- /usr/bin/startplasma-wayland --version"
           - name: arch-kde
             context: ./images/arch-kde
             image: desktop-arch-kde
-            test_command: "/usr/bin/startplasma-wayland --version"
+            test_command: "dbus-run-session -- /usr/bin/startplasma-wayland --version"
 
     steps:
       - name: Checkout repository
