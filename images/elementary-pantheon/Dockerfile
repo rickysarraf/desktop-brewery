@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     dbus-x11 locales libgl1-mesa-dri pipewire-audio procps sudo \
-    elementary-desktop io.elementary.terminal io.elementary.files && \
+    elementary-desktop && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
