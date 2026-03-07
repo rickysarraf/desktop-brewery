@@ -18,8 +18,14 @@ RUN apt-get update && \
 RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
 ARG USER_NAME=rrs
+# Ubuntu Noble images often have a 'ubuntu' user at 1000. We'll reuse or replace.
 RUN if id -u 1000 >/dev/null 2>&1; then \
-        usermod -l $USER_NAME $(id -nu 1000); \
+        existing_user=$(id -nu 1000); \
+        if [ "$existing_user" != "$USER_NAME" ]; then \
+            usermod -l $USER_NAME $existing_user; \
+            groupmod -n $USER_NAME $(id -ng $USER_NAME); \
+            usermod -d /home/$USER_NAME -m $USER_NAME; \
+        fi; \
     else \
         useradd -m -u 1000 -s /bin/bash $USER_NAME; \
     fi && \
