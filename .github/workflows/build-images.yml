@@ -28,27 +28,35 @@ jobs:
           - name: debian-testing-kde
             context: ./images/debian-testing-kde
             image: desktop-debian-testing-kde
+            test_command: "/usr/bin/startplasma-wayland --version"
           - name: debian-sid-gnome
             context: ./images/debian-sid-gnome
             image: desktop-debian-sid-gnome
+            test_command: "/usr/bin/gnome-session --version"
           - name: ubuntu-stable
             context: ./images/ubuntu-stable
             image: desktop-ubuntu-stable
+            test_command: "/usr/bin/gnome-session --version"
           - name: pop-os-cosmic
             context: ./images/pop-os-cosmic
             image: desktop-pop-os-cosmic
+            test_command: "ls /usr/bin/cosmic-session"
           - name: elementary-pantheon
             context: ./images/elementary-pantheon
             image: desktop-elementary-pantheon
+            test_command: "ls /usr/bin/pantheon-session"
           - name: fedora-cosmic
             context: ./images/fedora-cosmic
             image: desktop-fedora-cosmic
+            test_command: "ls /usr/bin/cosmic-session"
           - name: opensuse-tumbleweed
             context: ./images/opensuse-tumbleweed
             image: desktop-opensuse-tumbleweed
+            test_command: "/usr/bin/startplasma-wayland --version"
           - name: arch-kde
             context: ./images/arch-kde
             image: desktop-arch-kde
+            test_command: "/usr/bin/startplasma-wayland --version"
 
     steps:
       - name: Checkout repository
@@ -74,6 +82,7 @@ jobs:
             type=sha
 
       - name: Build and push Docker image
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
@@ -82,3 +91,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Smoke Test Image
+        run: |
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }}:latest ${{ matrix.test_command }}
