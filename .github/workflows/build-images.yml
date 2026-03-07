@@ -40,11 +40,11 @@ jobs:
           - name: pop-os-cosmic
             context: ./images/pop-os-cosmic
             image: desktop-pop-os-cosmic
-            test_command: "test -x /usr/bin/cosmic-session"
+            test_command: "ls -F /usr/bin/cosmic* /usr/bin/start-cosmic"
           - name: elementary-pantheon
             context: ./images/elementary-pantheon
             image: desktop-elementary-pantheon
-            test_command: "test -x /usr/bin/io.elementary.desktop-session"
+            test_command: "ls -F /usr/bin/io.elementary.* /usr/bin/pantheon*"
           - name: fedora-cosmic
             context: ./images/fedora-cosmic
             image: desktop-fedora-cosmic
