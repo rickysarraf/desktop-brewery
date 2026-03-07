@@ -33,4 +33,4 @@ RUN if id -u 1000 >/dev/null 2>&1; then \
     echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
-CMD ["/usr/bin/pantheon-session"]
+CMD ["/usr/bin/io.elementary.desktop-session"]
