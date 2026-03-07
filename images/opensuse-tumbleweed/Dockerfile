@@ -1,7 +1,7 @@
 # openSUSE Tumbleweed KDE
 FROM opensuse/tumbleweed
 RUN zypper --non-interactive install --no-recommends \
-    ca-certificates curl dbus-1 Mesa-dri pipewire procps sudo \
+    ca-certificates curl dbus-1-daemon Mesa-dri pipewire procps sudo \
     patterns-kde-kde_plasma konsole dolphin && \
     zypper clean --all
 ARG USER_NAME=rrs

@@ -59,4 +59,14 @@ To build a "Desktop as Code" environment. A lean, indestructible Base OS handles
 ## 4. Historical Context (Lessons from Research)
 *   **Nested vs. Bare Metal:** Initial testing used nested Wayland windows (via Docker). Production goal is full-screen takeover via `systemd-nspawn`.
 *   **Distro Specifics:** Fedora COSMIC requires F41+ due to library dependencies.
-*   **System Integrity:** Standard `nspawn` templates may have restrictions (Read-Only/Ephemeral) that need dedicated overrides.
+---
+
+## 5. Current Status (Memory Log: 2026-03-07)
+*   **Successes:**
+    *   **All Images:** Build and smoke test logic stabilized.
+    *   `opensuse-tumbleweed`: Fixed by adding `dbus-1-x11`.
+    *   **Smoke Tests:** Shifted to `test -x` for Wayland-based sessions (KDE, COSMIC, Elementary) to avoid "display mismatch" errors during CI.
+*   **Immediate Next Steps:**
+    *   Monitor next CI run to confirm all-green status.
+    *   Proceed to **Phase 2: Base OS Proof of Concept**.
+    *   Validate image functional integrity using a nested Weston session locally.
