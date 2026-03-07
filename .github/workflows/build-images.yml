@@ -44,7 +44,7 @@ jobs:
           - name: elementary-pantheon
             context: ./images/elementary-pantheon
             image: desktop-elementary-pantheon
-            test_command: "test -x /usr/bin/io.elementary.desktop-session"
+            test_command: "/usr/bin/gnome-session --version"
           - name: fedora-cosmic
             context: ./images/fedora-cosmic
             image: desktop-fedora-cosmic

@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     add-apt-repository -y ppa:elementary-os/os-patches && \
     apt-get update && apt-get clean
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+    apt-get install -y \
     dbus-x11 locales libgl1-mesa-dri pipewire-audio procps sudo \
     elementary-desktop && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -33,4 +33,4 @@ RUN if id -u 1000 >/dev/null 2>&1; then \
     echo "$USER_NAME ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/$USER_NAME
 USER $USER_NAME
 WORKDIR /home/$USER_NAME
-CMD ["/usr/bin/io.elementary.desktop-session"]
+CMD ["/usr/bin/gnome-session"]
