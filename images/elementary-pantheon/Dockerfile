@@ -3,7 +3,7 @@ FROM ubuntu:noble
 RUN mkdir -p /etc/dpkg/dpkg.cfg.d/ && echo 'path-exclude /boot/*' > /etc/dpkg/dpkg.cfg.d/exclude-boot
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl gnupg software-properties-common && \
+    ca-certificates curl gnupg software-properties-common git && \
     add-apt-repository -y main && \
     add-apt-repository -y universe && \
     add-apt-repository -y restricted && \
@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     dbus-x11 locales libgl1-mesa-dri pipewire-audio procps sudo \
-    elementary-desktop io.elementary.terminal io.elementary.files && \
+    elementary-desktop pantheon-terminal pantheon-files && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 RUN locale-gen en_US.UTF-8
 ENV LANG=en_US.UTF-8
