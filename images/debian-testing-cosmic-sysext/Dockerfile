@@ -5,7 +5,6 @@ FROM debian:testing AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Update and install build dependencies
-# Note: These are derived from your working chroot logic
 RUN apt-get update && apt-get install -y \
     build-essential \
     git \
@@ -46,26 +45,30 @@ RUN apt-get update && apt-get install -y \
     wayland-protocols \
     extra-cmake-modules \
     scdoc \
+    sed \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /build
 
 # Clone the COSMIC monorepo (Epoch 1.0.8)
-RUN git clone --recursive https://github.com/pop-os/cosmic-epoch.git . \
-    && git checkout epoch-1.0.8
+# Using a more robust shallow clone for submodules to speed up CI
+RUN git clone --recursive --depth 1 --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
 # Build all components using just
 # This mimics your local 'just build' approach
 RUN just build-release --prefix /usr --destdir /export
 
+# Prepare the extension-release metadata in the builder stage
+# (This avoids needing 'sed' in the final scratch stage)
+RUN cp /etc/os-release /export/extension-release.cosmic && \
+    sed -i 's/^ID=/SYSEXT_LEVEL=1\nID=/' /export/extension-release.cosmic
+
 # Stage 2: Packaging (The Sysext Image)
 FROM scratch
 
-# Metadata for systemd-sysext
-# This tells systemd that this extension is compatible with Debian Testing
-COPY --from=builder /etc/os-release /usr/lib/extension-release.d/extension-release.cosmic
-RUN sed -i 's/^ID=/SYSEXT_LEVEL=1\nID=/' /usr/lib/extension-release.d/extension-release.cosmic
+# Copy the metadata to the correct sysext path
+COPY --from=builder /export/extension-release.cosmic /usr/lib/extension-release.d/extension-release.cosmic
 
 # Copy the built hierarchy
 COPY --from=builder /export/usr /usr
