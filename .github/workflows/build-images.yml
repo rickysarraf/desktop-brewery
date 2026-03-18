@@ -29,38 +29,6 @@ jobs:
             context: ./images/debian-testing-cosmic-sysext
             image: debian-testing-cosmic-sysext
             test_command: "test -x /usr/bin/cosmic-session"
-          - name: debian-testing-kde
-            context: ./images/debian-testing-kde
-            image: desktop-debian-testing-kde
-            test_command: "test -x /usr/bin/startplasma-wayland"
-          - name: debian-sid-gnome
-            context: ./images/debian-sid-gnome
-            image: desktop-debian-sid-gnome
-            test_command: "/usr/bin/gnome-session --version"
-          - name: ubuntu-stable
-            context: ./images/ubuntu-stable
-            image: desktop-ubuntu-stable
-            test_command: "/usr/bin/gnome-session --version"
-          - name: pop-os-cosmic
-            context: ./images/pop-os-cosmic
-            image: desktop-pop-os-cosmic
-            test_command: "test -x /usr/bin/cosmic-session"
-          - name: elementary-pantheon
-            context: ./images/elementary-pantheon
-            image: desktop-elementary-pantheon
-            test_command: "/usr/bin/gnome-session --version"
-          - name: fedora-cosmic
-            context: ./images/fedora-cosmic
-            image: desktop-fedora-cosmic
-            test_command: "test -x /usr/bin/cosmic-session"
-          - name: opensuse-tumbleweed
-            context: ./images/opensuse-tumbleweed
-            image: desktop-opensuse-tumbleweed
-            test_command: "test -x /usr/bin/startplasma-wayland"
-          - name: arch-kde
-            context: ./images/arch-kde
-            image: desktop-arch-kde
-            test_command: "test -x /usr/bin/startplasma-wayland"
 
     steps:
       - name: Checkout repository
