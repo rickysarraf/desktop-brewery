@@ -46,6 +46,7 @@ RUN apt-get update && apt-get install -y \
     extra-cmake-modules \
     scdoc \
     sed \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -55,9 +56,9 @@ WORKDIR /build
 # Using a more robust shallow clone for submodules to speed up CI
 RUN git clone --recursive --depth 1 --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
-# Build all components using just
-# This mimics your local 'just build' approach
-RUN just build-release --prefix /usr --destdir /export
+# Build and install all components to /export
+# This uses the 'install' recipe which handles building automatically
+RUN just install rootdir=/export prefix=/usr
 
 # Prepare the extension-release metadata in the builder stage
 # (This avoids needing 'sed' in the final scratch stage)
