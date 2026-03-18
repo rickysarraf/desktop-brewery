@@ -49,10 +49,15 @@ RUN apt-get update && apt-get install -y \
     scdoc \
     sed \
     make \
+    libclang-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /build
+
+# Set LIBCLANG_PATH to ensure rust-clang-sys can find libclang.so
+# Note: Path is version-specific in Debian Testing/Unstable
+ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 
 # Clone the COSMIC monorepo (Epoch 1.0.8)
 # Using a more robust shallow clone for submodules to speed up CI
