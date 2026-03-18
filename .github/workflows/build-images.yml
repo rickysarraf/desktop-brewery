@@ -25,6 +25,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: debian-testing-cosmic-sysext
+            context: ./images/debian-testing-cosmic-sysext
+            image: debian-testing-cosmic-sysext
+            test_command: "test -x /usr/bin/cosmic-session"
           - name: debian-testing-kde
             context: ./images/debian-testing-kde
             image: desktop-debian-testing-kde
