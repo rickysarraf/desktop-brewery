@@ -42,6 +42,8 @@ RUN apt-get update && apt-get install -y \
     cmake \
     libpixman-1-dev \
     libwayland-bin \
+    libdisplay-info-dev \
+    libxcb-xinput-dev \
     wayland-protocols \
     extra-cmake-modules \
     scdoc \
