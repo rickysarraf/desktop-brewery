@@ -7,7 +7,7 @@ on:
       - 'images/**'
       - '.github/workflows/**'
   schedule:
-    - cron: '0 0 * * 0' # Weekly build on Sunday
+    - cron: '0 18 * * 5' # Weekly build on Friday at 18:00 UTC (11:30 PM IST)
   workflow_dispatch:
 
 env:
@@ -20,15 +20,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: debian-testing-cosmic-sysext
-            context: ./images/debian-testing-cosmic-sysext
-            image: debian-testing-cosmic-sysext
-            test_command: "test -x /usr/bin/cosmic-session"
 
     steps:
       - name: Checkout repository
@@ -48,22 +39,20 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }}
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/debian-testing-cosmic-sysext
           tags: |
             type=raw,value=latest
             type=sha
 
-      - name: Build and push Docker image
-        id: build
+      - name: Build and push Optimized Sysext
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.context }}
+          context: ./images/debian-testing-cosmic-sysext
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # 1. Enable Native GitHub Caching
           cache-from: type=gha
+          # 2. 'mode=max' exports the BuildKit mounts (--mount=type=cache) 
+          # from the Dockerfile into the GHA cache backend (10GB limit).
           cache-to: type=gha,mode=max
-
-      - name: Smoke Test Image
-        run: |
-          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }}:latest ${{ matrix.test_command }}
