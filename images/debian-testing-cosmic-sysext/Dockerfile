@@ -4,7 +4,7 @@ FROM debian:testing AS builder
 # Prevent interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Add sccache and late-stage icon dependencies
+# 1. Add sccache, late-stage icon dependencies, and bsdextrautils (for 'rev')
 RUN apt-get update && apt-get install -y \
     build-essential git just cargo rustc pkg-config \
     libpipewire-0.3-dev libspa-0.2-dev libwayland-dev libxkbcommon-dev \
@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
     libgstreamer-plugins-base1.0-dev clang llvm-dev cmake \
     libpixman-1-dev libwayland-bin libdisplay-info-dev libxcb-xinput-dev \
     wayland-protocols extra-cmake-modules scdoc sed make libclang-dev \
-    sccache gtk-update-icon-cache hicolor-icon-theme \
+    sccache gtk-update-icon-cache hicolor-icon-theme bsdextrautils \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -39,11 +39,12 @@ RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
 # 4. Build and install with persistent cache mounts
-# These mounts are exported to GitHub Cache via 'mode=max' in the workflow
-RUN --mount=type=cache,target=/root/.cargo/registry \
+# We explicitly create /export to ensure the 'just install' and metadata copy succeed
+RUN mkdir -p /export && \
+    --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
-    just install rootdir=/export prefix=/usr
+    just install /export /usr
 
 # Prepare the extension-release metadata
 RUN cp /etc/os-release /export/extension-release.cosmic && \
