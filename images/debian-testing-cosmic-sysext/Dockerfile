@@ -34,7 +34,9 @@ ENV SCCACHE_DIR=/root/.cache/sccache
 ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 
 # Clone the COSMIC monorepo (Epoch 1.0.8)
-RUN git clone --recursive --depth 1 --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
+# Note: Shallow clones (--depth 1) can cause panics in 'vergen' build scripts (e.g., cosmic-player)
+RUN git config --global --add safe.directory /build && \
+    git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
 # 4. Build and install with persistent cache mounts
 # These mounts are exported to GitHub Cache via 'mode=max' in the workflow
