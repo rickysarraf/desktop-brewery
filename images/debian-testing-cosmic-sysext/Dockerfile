@@ -23,7 +23,6 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /build
 
 # 2. Global Rust Optimization Overrides for CI (Memory Safety)
-# Using ThinLTO instead of FatLTO to stay within GitHub's 7GB RAM limit
 ENV CARGO_PROFILE_RELEASE_LTO=thin
 ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 ENV CARGO_PROFILE_RELEASE_PANIC=abort
@@ -34,15 +33,11 @@ ENV SCCACHE_DIR=/root/.cache/sccache
 ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 
 # Clone the COSMIC monorepo (Epoch 1.0.8)
-# Note: Shallow clones (--depth 1) can cause panics in 'vergen' build scripts (e.g., cosmic-player)
 RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
 # 4. Build and install with persistent cache mounts
-# Create /export first
 RUN mkdir -p /export
-
-# Run build/install with mounts (mounts MUST be the first thing after RUN)
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
@@ -53,15 +48,24 @@ RUN --mount=type=cache,target=/root/.cache/sccache \
     sccache --show-stats
 
 # Prepare the extension-release metadata
-RUN cp /etc/os-release /export/extension-release.cosmic && \
-    sed -i 's/^ID=/SYSEXT_LEVEL=1\nID=/' /export/extension-release.cosmic
+# We create a very minimal release file to ensure maximum compatibility with Sid/Testing
+RUN echo 'ID=debian' > /export/extension-release.cosmic && \
+    echo 'SYSEXT_LEVEL=1' >> /export/extension-release.cosmic
 
 # Stage 2: Packaging (The Sysext Image)
-FROM scratch
+# Using busybox instead of scratch makes the image 'runnable' for easier extraction
+FROM busybox
+
+# Copy the metadata to the correct sysext path
 COPY --from=builder /export/extension-release.cosmic /usr/lib/extension-release.d/extension-release.cosmic
+
+# Copy the built hierarchy
 COPY --from=builder /export/usr /usr
 
 # Labels for GHCR
-LABEL org.opencontainers.image.source="https://github.com/riteshsarraf/desktop-brewery"
+LABEL org.opencontainers.image.source="https://github.com/rickysarraf/desktop-brewery"
 LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Optimized Sysext)"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
+
+# Default command to keep 'docker create' happy
+CMD ["sh"]
