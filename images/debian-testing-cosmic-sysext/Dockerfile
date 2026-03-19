@@ -26,13 +26,17 @@ WORKDIR /build
 ENV CARGO_PROFILE_RELEASE_LTO=thin
 ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 ENV CARGO_PROFILE_RELEASE_PANIC=abort
+ENV CARGO_INCREMENTAL=0
 
-# 3. Configure sccache for Rust
-ENV RUSTC_WRAPPER=sccache
+# 3. Force sccache usage via global Cargo config
+# This is more robust than ENV variables for complex monorepo builds (just/make subshells)
+RUN mkdir -p /root/.cargo && \
+    echo '[build]\nrustc-wrapper = "/usr/bin/sccache"' > /root/.cargo/config.toml
+
 ENV SCCACHE_DIR=/root/.cache/sccache
 ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 
-# Clone the COSMIC monorepo (Epoch 1.0.8)
+# Mark the directory as safe for git (required for vergen and other build scripts)
 RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
@@ -48,18 +52,12 @@ RUN --mount=type=cache,target=/root/.cache/sccache \
     sccache --show-stats
 
 # Prepare the extension-release metadata
-# We create a very minimal release file to ensure maximum compatibility with Sid/Testing
 RUN echo 'ID=debian' > /export/extension-release.cosmic && \
     echo 'SYSEXT_LEVEL=1' >> /export/extension-release.cosmic
 
 # Stage 2: Packaging (The Sysext Image)
-# Using busybox instead of scratch makes the image 'runnable' for easier extraction
 FROM busybox
-
-# Copy the metadata to the correct sysext path
 COPY --from=builder /export/extension-release.cosmic /usr/lib/extension-release.d/extension-release.cosmic
-
-# Copy the built hierarchy
 COPY --from=builder /export/usr /usr
 
 # Labels for GHCR
@@ -67,5 +65,4 @@ LABEL org.opencontainers.image.source="https://github.com/rickysarraf/desktop-br
 LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Optimized Sysext)"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 
-# Default command to keep 'docker create' happy
 CMD ["sh"]
