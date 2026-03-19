@@ -39,9 +39,11 @@ RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
 # 4. Build and install with persistent cache mounts
-# We explicitly create /export to ensure the 'just install' and metadata copy succeed
-RUN mkdir -p /export && \
-    --mount=type=cache,target=/root/.cargo/registry \
+# Create /export first
+RUN mkdir -p /export
+
+# Run build/install with mounts (mounts MUST be the first thing after RUN)
+RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
     just install /export /usr
