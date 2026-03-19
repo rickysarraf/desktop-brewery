@@ -48,6 +48,10 @@ RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cache/sccache \
     just install /export /usr
 
+# 5. Show sccache statistics for transparency
+RUN --mount=type=cache,target=/root/.cache/sccache \
+    sccache --show-stats
+
 # Prepare the extension-release metadata
 RUN cp /etc/os-release /export/extension-release.cosmic && \
     sed -i 's/^ID=/SYSEXT_LEVEL=1\nID=/' /export/extension-release.cosmic
