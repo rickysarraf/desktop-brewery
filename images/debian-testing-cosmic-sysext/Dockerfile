@@ -1,11 +1,6 @@
 # Stage 1: Builder
 FROM debian:testing AS builder
 
-# Arguments for GitHub Actions Cache
-ARG ACTIONS_CACHE_URL
-ARG ACTIONS_RUNTIME_TOKEN
-
-# Prevent interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 1. Add build dependencies
@@ -25,37 +20,36 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /build
 
-# 2. Global Rust Optimization Overrides for CI (Memory Safety)
+# 2. Memory Safety
 ENV CARGO_PROFILE_RELEASE_LTO=thin
 ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 ENV CARGO_PROFILE_RELEASE_PANIC=abort
 ENV CARGO_INCREMENTAL=0
 
-# 3. FORCE sccache via compiler hijacking (The "Nuclear Option")
-# This ensures sccache is used regardless of environment scrubbing by build tools.
-RUN mv /usr/bin/rustc /usr/bin/rustc.real && \
-    echo '#!/bin/bash' > /usr/bin/rustc && \
-    echo 'exec /usr/bin/sccache /usr/bin/rustc.real "$@"' >> /usr/bin/rustc && \
-    chmod +x /usr/bin/rustc
+# 3. Configure sccache via Global Cargo Config (Proven Track)
+RUN mkdir -p /root/.cargo && \
+    echo '[build]\nrustc-wrapper = "/usr/bin/sccache"' > /root/.cargo/config.toml
 
-# 4. Configure sccache to use GitHub Actions Cache Backend
-ENV SCCACHE_GHA_ENABLED=true
-ENV ACTIONS_CACHE_URL=${ACTIONS_CACHE_URL}
-ENV ACTIONS_RUNTIME_TOKEN=${ACTIONS_RUNTIME_TOKEN}
+ENV SCCACHE_DIR=/root/.cache/sccache
 ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 
 # Mark the directory as safe for git
 RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
-# 5. TARGETED VALIDATION: Build only cosmic-randr correctly
+# 4. Build and install with EXPLICIT local cache mounts
+# This is the most stable way to persist data between runs on GitHub
 RUN mkdir -p /export/usr && \
-    sh -c "cd cosmic-randr && just build-release && just rootdir=/export prefix=/usr install"
+    --mount=type=cache,target=/root/.cargo/registry \
+    --mount=type=cache,target=/root/.cargo/git \
+    --mount=type=cache,target=/root/.cache/sccache \
+    just install /export /usr
 
-# 6. Show sccache statistics
-RUN sccache --show-stats
+# 5. Show statistics
+RUN --mount=type=cache,target=/root/.cache/sccache \
+    sccache --show-stats
 
-# 7. SANitization: Remove fundamental system binaries
+# 6. SANitization: Remove fundamental system binaries
 RUN rm -f /export/usr/bin/env /export/usr/bin/bash /export/usr/bin/sh /export/usr/bin/dash
 
 # Prepare metadata
@@ -68,7 +62,7 @@ COPY --from=builder /export/extension-release.cosmic /usr/lib/extension-release.
 COPY --from=builder /export/usr /usr
 
 LABEL org.opencontainers.image.source="https://github.com/rickysarraf/desktop-brewery"
-LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Diligence Build)"
+LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Proven Caching)"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 
 CMD ["sh"]

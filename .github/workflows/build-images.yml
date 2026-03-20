@@ -51,10 +51,13 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Use GHA cache for Docker layers
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          # PASS GHA Cache credentials to Docker for sccache
-          build-args: |
-            ACTIONS_CACHE_URL=${{ env.ACTIONS_CACHE_URL }}
-            ACTIONS_RUNTIME_TOKEN=${{ env.ACTIONS_RUNTIME_TOKEN }}
+          # Switch to LOCAL caching for Docker. 
+          # This is the most reliable way to persist internal BuildKit mounts (--mount=type=cache)
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      # Move cache to avoid infinite growth
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
