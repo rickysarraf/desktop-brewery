@@ -3,7 +3,7 @@ FROM debian:testing AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Install build dependencies (Shared across most cosmic-utils)
+# 1. Install build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential git just cargo rustc pkg-config \
     libpipewire-0.3-dev libspa-0.2-dev libwayland-dev libxkbcommon-dev \
@@ -27,15 +27,21 @@ WORKDIR /build
 RUN mkdir -p /export/usr
 
 # 2. Batch Clone and Build
-# We clone and build each tool independently within the same stage to share common Cargo objects
+# cosmic-ext-tweaks
 RUN git clone --depth 1 https://github.com/cosmic-utils/tweaks.git cosmic-ext-tweaks && \
     cd cosmic-ext-tweaks && just build-release && just rootdir=/export prefix=/usr install
 
+# cosmic-ext-applet-external-monitor-brightness
 RUN git clone --depth 1 https://github.com/cosmic-utils/cosmic-ext-applet-external-monitor-brightness.git && \
     cd cosmic-ext-applet-external-monitor-brightness && just build-release && just rootdir=/export prefix=/usr install
 
-RUN git clone --depth 1 https://github.com/cosmic-utils/cosmic-ext-applet-clipboard-manager.git && \
-    cd cosmic-ext-applet-clipboard-manager && just build-release && just rootdir=/export prefix=/usr install
+# clipboard-manager (Corrected repo name)
+RUN git clone --depth 1 https://github.com/cosmic-utils/clipboard-manager.git && \
+    cd clipboard-manager && just build-release && just rootdir=/export prefix=/usr install
+
+# cosmic-ext-applet-vigil (Keep-awake tool)
+RUN git clone --depth 1 https://github.com/cosmic-utils/cosmic-ext-applet-vigil.git && \
+    cd cosmic-ext-applet-vigil && just build-release && just rootdir=/export prefix=/usr install
 
 # 3. SANitization: Remove fundamental system binaries
 RUN rm -f /export/usr/bin/env /export/usr/bin/bash /export/usr/bin/sh /export/usr/bin/dash
