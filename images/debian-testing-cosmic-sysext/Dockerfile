@@ -36,10 +36,10 @@ ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
-# 4. QUICK VALIDATION: Build only cosmic-randr
+# 4. QUICK VALIDATION: Build only cosmic-randr using positional arguments
 RUN mkdir -p /export
 
-# We call the specific project justfile to avoid the full stack overhead
+# Corrected syntax: Using the root justfile to call the sub-project install
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
