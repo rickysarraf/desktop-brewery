@@ -39,11 +39,11 @@ RUN git config --global --add safe.directory /build && \
 # 4. QUICK VALIDATION: Build only cosmic-randr correctly
 RUN mkdir -p /export/usr
 
-# Corrected syntax: Using named arguments for the sub-project justfile
+# Definite Fix: We MUST run build-release before install in the sub-project
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
-    sh -c "cd cosmic-randr && env RUSTC_WRAPPER=/usr/bin/sccache just rootdir=/export prefix=/usr install"
+    sh -c "cd cosmic-randr && env RUSTC_WRAPPER=/usr/bin/sccache just build-release && env RUSTC_WRAPPER=/usr/bin/sccache just rootdir=/export prefix=/usr install"
 
 # 5. Show sccache statistics for transparency
 RUN --mount=type=cache,target=/root/.cache/sccache \
