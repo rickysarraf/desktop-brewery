@@ -26,7 +26,7 @@ ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 ENV CARGO_PROFILE_RELEASE_PANIC=abort
 ENV CARGO_INCREMENTAL=0
 
-# 3. Configure sccache via Global Cargo Config (Proven Track)
+# 3. Configure sccache via Global Cargo Config (The Proven Track)
 RUN mkdir -p /root/.cargo && \
     echo '[build]\nrustc-wrapper = "/usr/bin/sccache"' > /root/.cargo/config.toml
 
@@ -37,13 +37,13 @@ ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
-# 4. Build and install with EXPLICIT local cache mounts
-# This is the most stable way to persist data between runs on GitHub
-RUN mkdir -p /export/usr && \
-    --mount=type=cache,target=/root/.cargo/registry \
+# 4. QUICK VALIDATION: Build only cosmic-randr correctly
+RUN mkdir -p /export/usr
+
+RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
-    just install /export /usr
+    sh -c "cd cosmic-randr && just build-release && just rootdir=/export prefix=/usr install"
 
 # 5. Show statistics
 RUN --mount=type=cache,target=/root/.cache/sccache \
@@ -62,7 +62,7 @@ COPY --from=builder /export/extension-release.cosmic /usr/lib/extension-release.
 COPY --from=builder /export/usr /usr
 
 LABEL org.opencontainers.image.source="https://github.com/rickysarraf/desktop-brewery"
-LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Proven Caching)"
+LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Caching Validation)"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 
 CMD ["sh"]

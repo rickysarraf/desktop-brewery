@@ -25,6 +25,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # MANDATORY: Persistent storage for the Docker local cache
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -51,12 +60,11 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Switch to LOCAL caching for Docker. 
-          # This is the most reliable way to persist internal BuildKit mounts (--mount=type=cache)
+          # Use LOCAL caching for Docker. This correctly exports internal --mount=type=cache
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
 
-      # Move cache to avoid infinite growth
+      # Move cache to avoid infinite growth and prepare for 'Post' cache save
       - name: Move cache
         run: |
           rm -rf /tmp/.buildx-cache
