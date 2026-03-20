@@ -28,7 +28,13 @@ ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 ENV CARGO_PROFILE_RELEASE_PANIC=abort
 ENV CARGO_INCREMENTAL=0
 
-# Config for sccache
+# 3. FORCE sccache via compiler hijacking (The "Nuclear Option")
+# This replaces the rustc entrypoint at the system level so NO build tool can bypass it.
+RUN mv /usr/bin/rustc /usr/bin/rustc.real && \
+    echo '#!/bin/bash' > /usr/bin/rustc && \
+    echo 'exec /usr/bin/sccache /usr/bin/rustc.real "$@"' >> /usr/bin/rustc && \
+    chmod +x /usr/bin/rustc
+
 ENV SCCACHE_DIR=/root/.cache/sccache
 ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 
@@ -39,11 +45,12 @@ RUN git config --global --add safe.directory /build && \
 # 4. QUICK VALIDATION: Build only cosmic-randr correctly
 RUN mkdir -p /export/usr
 
-# Definite Fix: We MUST run build-release before install in the sub-project
+# With the hijacked rustc, we can just run the build normally. 
+# Every single call to 'rustc' inside just/cargo will now hit sccache.
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
-    sh -c "cd cosmic-randr && env RUSTC_WRAPPER=/usr/bin/sccache just build-release && env RUSTC_WRAPPER=/usr/bin/sccache just rootdir=/export prefix=/usr install"
+    sh -c "cd cosmic-randr && just build-release && just rootdir=/export prefix=/usr install"
 
 # 5. Show sccache statistics for transparency
 RUN --mount=type=cache,target=/root/.cache/sccache \
