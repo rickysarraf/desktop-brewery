@@ -36,22 +36,20 @@ ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
-# 4. Build and install with persistent cache mounts
+# 4. QUICK VALIDATION: Build only cosmic-randr
 RUN mkdir -p /export
 
-# FORCE sccache by injecting it directly into the environment of the build command
-# This prevents sub-shells from losing the wrapper configuration.
+# We call the specific project justfile to avoid the full stack overhead
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
-    env RUSTC_WRAPPER=/usr/bin/sccache just install /export /usr
+    env RUSTC_WRAPPER=/usr/bin/sccache just cosmic-randr/install /export /usr
 
 # 5. Show sccache statistics for transparency
 RUN --mount=type=cache,target=/root/.cache/sccache \
     sccache --show-stats
 
-# 6. SANitization: Remove fundamental system binaries that should be host-owned.
-# This prevents the sysext from breaking the host's /usr/bin/env and other tools.
+# 6. SANitization: Remove fundamental system binaries
 RUN rm -f /export/usr/bin/env /export/usr/bin/bash /export/usr/bin/sh /export/usr/bin/dash
 
 # Prepare the extension-release metadata
