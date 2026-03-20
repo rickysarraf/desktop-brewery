@@ -1,10 +1,14 @@
 # Stage 1: Builder
 FROM debian:testing AS builder
 
+# Arguments for GitHub Actions Cache
+ARG ACTIONS_CACHE_URL
+ARG ACTIONS_RUNTIME_TOKEN
+
 # Prevent interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Add sccache, late-stage icon dependencies, and bsdextrautils (for 'rev')
+# 1. Add build dependencies
 RUN apt-get update && apt-get install -y \
     build-essential git just cargo rustc pkg-config \
     libpipewire-0.3-dev libspa-0.2-dev libwayland-dev libxkbcommon-dev \
@@ -19,7 +23,6 @@ RUN apt-get update && apt-get install -y \
     sccache gtk-update-icon-cache hicolor-icon-theme bsdextrautils \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
 WORKDIR /build
 
 # 2. Global Rust Optimization Overrides for CI (Memory Safety)
@@ -28,47 +31,38 @@ ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 ENV CARGO_PROFILE_RELEASE_PANIC=abort
 ENV CARGO_INCREMENTAL=0
 
-# 3. FORCE sccache via compiler hijacking (The "Nuclear Option")
-# This replaces the rustc entrypoint at the system level so NO build tool can bypass it.
-RUN mv /usr/bin/rustc /usr/bin/rustc.real && \
-    echo '#!/bin/bash' > /usr/bin/rustc && \
-    echo 'exec /usr/bin/sccache /usr/bin/rustc.real "$@"' >> /usr/bin/rustc && \
-    chmod +x /usr/bin/rustc
-
-ENV SCCACHE_DIR=/root/.cache/sccache
+# 3. Configure sccache to use GitHub Actions Cache Backend
+# This is the "Industry Standard" for building Rust on GitHub.
+ENV RUSTC_WRAPPER=sccache
+ENV SCCACHE_GHA_ENABLED=true
+ENV ACTIONS_CACHE_URL=${ACTIONS_CACHE_URL}
+ENV ACTIONS_RUNTIME_TOKEN=${ACTIONS_RUNTIME_TOKEN}
 ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 
-# Mark the directory as safe for git (required for vergen and other build scripts)
+# Mark the directory as safe for git
 RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
-# 4. QUICK VALIDATION: Build only cosmic-randr correctly
-RUN mkdir -p /export/usr
+# 4. Build and install full stack
+# sccache will now automatically upload/download to GitHub's Cache API
+RUN mkdir -p /export && \
+    just install /export /usr
 
-# With the hijacked rustc, we can just run the build normally. 
-# Every single call to 'rustc' inside just/cargo will now hit sccache.
-RUN --mount=type=cache,target=/root/.cargo/registry \
-    --mount=type=cache,target=/root/.cargo/git \
-    --mount=type=cache,target=/root/.cache/sccache \
-    sh -c "cd cosmic-randr && just build-release && just rootdir=/export prefix=/usr install"
-
-# 5. Show sccache statistics for transparency
-RUN --mount=type=cache,target=/root/.cache/sccache \
-    sccache --show-stats
+# 5. Show sccache statistics
+RUN sccache --show-stats
 
 # 6. SANitization: Remove fundamental system binaries
 RUN rm -f /export/usr/bin/env /export/usr/bin/bash /export/usr/bin/sh /export/usr/bin/dash
 
-# Prepare the extension-release metadata
+# Prepare metadata
 RUN echo 'ID=debian' > /export/extension-release.cosmic && \
     echo 'SYSEXT_LEVEL=1' >> /export/extension-release.cosmic
 
-# Stage 2: Packaging (The Sysext Image)
+# Stage 2: Packaging
 FROM busybox
 COPY --from=builder /export/extension-release.cosmic /usr/lib/extension-release.d/extension-release.cosmic
 COPY --from=builder /export/usr /usr
 
-# Labels for GHCR
 LABEL org.opencontainers.image.source="https://github.com/rickysarraf/desktop-brewery"
 LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Optimized Sysext)"
 LABEL org.opencontainers.image.licenses="GPL-3.0"

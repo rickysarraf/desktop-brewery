@@ -51,8 +51,10 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # 1. Enable Native GitHub Caching
+          # Use GHA cache for Docker layers
           cache-from: type=gha
-          # 2. 'mode=max' exports the BuildKit mounts (--mount=type=cache) 
-          # from the Dockerfile into the GHA cache backend (10GB limit).
           cache-to: type=gha,mode=max
+          # PASS GHA Cache credentials to Docker for sccache
+          build-args: |
+            ACTIONS_CACHE_URL=${{ env.ACTIONS_CACHE_URL }}
+            ACTIONS_RUNTIME_TOKEN=${{ env.ACTIONS_RUNTIME_TOKEN }}
