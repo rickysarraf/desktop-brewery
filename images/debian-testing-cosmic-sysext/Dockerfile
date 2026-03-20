@@ -37,13 +37,13 @@ RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
 # 4. QUICK VALIDATION: Build only cosmic-randr correctly
-RUN mkdir -p /export
+RUN mkdir -p /export/usr
 
-# Definite Fix: CD into the subproject and use the subproject's Justfile
+# Corrected syntax: Using named arguments for the sub-project justfile
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
-    sh -c "cd cosmic-randr && env RUSTC_WRAPPER=/usr/bin/sccache just install /export /usr"
+    sh -c "cd cosmic-randr && env RUSTC_WRAPPER=/usr/bin/sccache just rootdir=/export prefix=/usr install"
 
 # 5. Show sccache statistics for transparency
 RUN --mount=type=cache,target=/root/.cache/sccache \
