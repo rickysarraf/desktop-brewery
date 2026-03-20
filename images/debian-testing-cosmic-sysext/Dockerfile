@@ -1,11 +1,9 @@
 # Stage 1: Builder
 FROM debian:testing AS builder
 
-# Arguments for GitHub Actions Cache
 ARG ACTIONS_CACHE_URL
 ARG ACTIONS_RUNTIME_TOKEN
 
-# Prevent interactive prompts during build
 ENV DEBIAN_FRONTEND=noninteractive
 
 # 1. Add build dependencies
@@ -25,14 +23,13 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /build
 
-# 2. Global Rust Optimization Overrides for CI (Memory Safety)
+# 2. Memory Safety
 ENV CARGO_PROFILE_RELEASE_LTO=thin
 ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 ENV CARGO_PROFILE_RELEASE_PANIC=abort
 ENV CARGO_INCREMENTAL=0
 
-# 3. Configure sccache to use GitHub Actions Cache Backend
-# This is the "Industry Standard" for building Rust on GitHub.
+# 3. GitHub Actions sccache Backend
 ENV RUSTC_WRAPPER=sccache
 ENV SCCACHE_GHA_ENABLED=true
 ENV ACTIONS_CACHE_URL=${ACTIONS_CACHE_URL}
@@ -43,10 +40,9 @@ ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
-# 4. Build and install full stack
-# sccache will now automatically upload/download to GitHub's Cache API
-RUN mkdir -p /export && \
-    just install /export /usr
+# 4. TARGETED VALIDATION: Build only cosmic-randr
+RUN mkdir -p /export/usr && \
+    sh -c "cd cosmic-randr && just build-release && just rootdir=/export prefix=/usr install"
 
 # 5. Show sccache statistics
 RUN sccache --show-stats
@@ -64,7 +60,7 @@ COPY --from=builder /export/extension-release.cosmic /usr/lib/extension-release.
 COPY --from=builder /export/usr /usr
 
 LABEL org.opencontainers.image.source="https://github.com/rickysarraf/desktop-brewery"
-LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Optimized Sysext)"
+LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Validation Build)"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 
 CMD ["sh"]
