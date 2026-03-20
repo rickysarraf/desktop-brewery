@@ -27,8 +27,8 @@ WORKDIR /build
 RUN mkdir -p /export/usr
 
 # 2. Batch Clone and Build
-# cosmic-ext-tweaks (Pinned to 0.2.0)
-RUN git clone --depth 1 --branch 0.2.0 https://github.com/cosmic-utils/tweaks.git cosmic-ext-tweaks && \
+# cosmic-ext-tweaks
+RUN git clone --depth 1 https://github.com/cosmic-utils/tweaks.git cosmic-ext-tweaks && \
     cd cosmic-ext-tweaks && just build-release && just rootdir=/export prefix=/usr install
 
 # cosmic-ext-applet-external-monitor-brightness
