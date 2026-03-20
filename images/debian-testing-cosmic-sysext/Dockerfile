@@ -3,7 +3,7 @@ FROM debian:testing AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# 1. Add build dependencies
+# 1. Add stable build dependencies (No sccache)
 RUN apt-get update && apt-get install -y \
     build-essential git just cargo rustc pkg-config \
     libpipewire-0.3-dev libspa-0.2-dev libwayland-dev libxkbcommon-dev \
@@ -15,41 +15,26 @@ RUN apt-get update && apt-get install -y \
     libgstreamer-plugins-base1.0-dev clang llvm-dev cmake \
     libpixman-1-dev libwayland-bin libdisplay-info-dev libxcb-xinput-dev \
     wayland-protocols extra-cmake-modules scdoc sed make libclang-dev \
-    sccache gtk-update-icon-cache hicolor-icon-theme bsdextrautils \
+    gtk-update-icon-cache hicolor-icon-theme bsdextrautils \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
 
-# 2. Memory Safety
+# 2. Memory Safety (ThinLTO is mandatory for GitHub's 7GB RAM)
 ENV CARGO_PROFILE_RELEASE_LTO=thin
 ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 ENV CARGO_PROFILE_RELEASE_PANIC=abort
-ENV CARGO_INCREMENTAL=0
-
-# 3. Configure sccache via Global Cargo Config (The Proven Track)
-RUN mkdir -p /root/.cargo && \
-    echo '[build]\nrustc-wrapper = "/usr/bin/sccache"' > /root/.cargo/config.toml
-
-ENV SCCACHE_DIR=/root/.cache/sccache
 ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 
 # Mark the directory as safe for git
 RUN git config --global --add safe.directory /build && \
     git clone --recursive --branch epoch-1.0.8 https://github.com/pop-os/cosmic-epoch.git .
 
-# 4. QUICK VALIDATION: Build only cosmic-randr correctly
-RUN mkdir -p /export/usr
+# 3. Build and install FULL stack
+RUN mkdir -p /export/usr && \
+    just install /export /usr
 
-RUN --mount=type=cache,target=/root/.cargo/registry \
-    --mount=type=cache,target=/root/.cargo/git \
-    --mount=type=cache,target=/root/.cache/sccache \
-    sh -c "cd cosmic-randr && just build-release && just rootdir=/export prefix=/usr install"
-
-# 5. Show statistics
-RUN --mount=type=cache,target=/root/.cache/sccache \
-    sccache --show-stats
-
-# 6. SANitization: Remove fundamental system binaries
+# 4. SANitization: Remove fundamental system binaries to protect host integrity
 RUN rm -f /export/usr/bin/env /export/usr/bin/bash /export/usr/bin/sh /export/usr/bin/dash
 
 # Prepare metadata
@@ -62,7 +47,7 @@ COPY --from=builder /export/extension-release.cosmic /usr/lib/extension-release.
 COPY --from=builder /export/usr /usr
 
 LABEL org.opencontainers.image.source="https://github.com/rickysarraf/desktop-brewery"
-LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Caching Validation)"
+LABEL org.opencontainers.image.description="Debian COSMIC System Extension (Stable Build)"
 LABEL org.opencontainers.image.licenses="GPL-3.0"
 
 CMD ["sh"]
