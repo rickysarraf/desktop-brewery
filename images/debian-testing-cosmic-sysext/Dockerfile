@@ -28,11 +28,7 @@ ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 ENV CARGO_PROFILE_RELEASE_PANIC=abort
 ENV CARGO_INCREMENTAL=0
 
-# 3. Force sccache usage via global Cargo config
-# This is more robust than ENV variables for complex monorepo builds (just/make subshells)
-RUN mkdir -p /root/.cargo && \
-    echo '[build]\nrustc-wrapper = "/usr/bin/sccache"' > /root/.cargo/config.toml
-
+# Config for sccache
 ENV SCCACHE_DIR=/root/.cache/sccache
 ENV LIBCLANG_PATH=/usr/lib/llvm-21/lib
 
@@ -42,14 +38,21 @@ RUN git config --global --add safe.directory /build && \
 
 # 4. Build and install with persistent cache mounts
 RUN mkdir -p /export
+
+# FORCE sccache by injecting it directly into the environment of the build command
+# This prevents sub-shells from losing the wrapper configuration.
 RUN --mount=type=cache,target=/root/.cargo/registry \
     --mount=type=cache,target=/root/.cargo/git \
     --mount=type=cache,target=/root/.cache/sccache \
-    just install /export /usr
+    env RUSTC_WRAPPER=/usr/bin/sccache just install /export /usr
 
 # 5. Show sccache statistics for transparency
 RUN --mount=type=cache,target=/root/.cache/sccache \
     sccache --show-stats
+
+# 6. SANitization: Remove fundamental system binaries that should be host-owned.
+# This prevents the sysext from breaking the host's /usr/bin/env and other tools.
+RUN rm -f /export/usr/bin/env /export/usr/bin/bash /export/usr/bin/sh /export/usr/bin/dash
 
 # Prepare the extension-release metadata
 RUN echo 'ID=debian' > /export/extension-release.cosmic && \
