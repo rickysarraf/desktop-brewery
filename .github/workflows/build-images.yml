@@ -17,6 +17,17 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: debian-testing-cosmic-sysext
+            context: ./images/debian-testing-cosmic-sysext
+            image: debian-testing-cosmic-sysext
+          - name: debian-testing-cosmic-utils-sysext
+            context: ./images/debian-testing-cosmic-utils-sysext
+            image: debian-testing-cosmic-utils-sysext
+
     permissions:
       contents: read
       packages: write
@@ -39,18 +50,17 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/debian-testing-cosmic-sysext
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_PREFIX }}/${{ matrix.image }}
           tags: |
             type=raw,value=latest
             type=sha
 
-      - name: Build and push Sysext
+      - name: Build and push ${{ matrix.name }}
         uses: docker/build-push-action@v5
         with:
-          context: ./images/debian-testing-cosmic-sysext
+          context: ${{ matrix.context }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Standard GHA caching for Docker layers only
           cache-from: type=gha
           cache-to: type=gha,mode=max
