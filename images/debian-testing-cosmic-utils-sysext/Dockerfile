@@ -43,6 +43,22 @@ RUN git clone --depth 1 https://github.com/cosmic-utils/clipboard-manager.git &&
 RUN git clone --depth 1 https://github.com/cosmic-utils/cosmic-ext-applet-vigil.git && \
     cd cosmic-ext-applet-vigil && just build-release && just rootdir=/export prefix=/usr install
 
+# chronos (Pomodoro timer)
+RUN git clone --depth 1 https://github.com/cosmic-utils/chronos.git && \
+    cd chronos && just build-release && just rootdir=/export prefix=/usr install
+
+# calculator (Simple calculator)
+RUN git clone --depth 1 https://github.com/cosmic-utils/calculator.git && \
+    cd calculator && just build-release && just rootdir=/export prefix=/usr install
+
+# tasks (Task management application)
+RUN git clone --depth 1 https://github.com/cosmic-utils/tasks.git && \
+    cd tasks && just build-release && just rootdir=/export prefix=/usr install
+
+# app-hub (AppImage Manager)
+RUN git clone --depth 1 https://github.com/cosmic-utils/app-hub.git && \
+    cd app-hub && just build-release && just rootdir=/export prefix=/usr install
+
 # 3. SANitization: Remove fundamental system binaries
 RUN rm -f /export/usr/bin/env /export/usr/bin/bash /export/usr/bin/sh /export/usr/bin/dash
 
