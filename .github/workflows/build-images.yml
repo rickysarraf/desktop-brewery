@@ -6,6 +6,11 @@ on:
     paths:
       - 'images/**'
       - '.github/workflows/**'
+  pull_request:
+    branches: [ "main" ]
+    paths:
+      - 'images/**'
+      - '.github/workflows/**'
   schedule:
     - cron: '0 18 * * 5' # Weekly build on Friday at 18:00 UTC (11:30 PM IST)
   workflow_dispatch:
@@ -59,7 +64,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ${{ matrix.context }}
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # CACHE DISCARDED: StandardFresh builds only.
