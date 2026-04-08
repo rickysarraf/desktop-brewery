@@ -55,7 +55,7 @@ To build a "Desktop as Code" environment. A lean, indestructible Base OS handles
 *   **Goal:** Mission Accomplished.
 
 ### Phase 5: Extension Brewery (Sysext) - ACTIVE ✅
-*   **Status:** Successfully generated and validated the first COSMIC Epoch 1.0.8 sysext image on real hardware.
+*   **Status:** Initiating transition to COSMIC Epoch 1.0.9. Dockerfiles and canary scripts bumped; build and validation pending.
 *   **Innovation:** Integrated the **Tiered JIT Canary** mechanism. 
     *   **Relaxed (>=):** Allows core OS updates.
     *   **Strict (=):** Pins graphics/volatile stack for ABI safety.
@@ -97,4 +97,9 @@ The "Brewery" pipeline is fully operational. All target images build, pass smoke
 ## 6. Next Priority: Phase 2 (Base OS Proof of Concept)
 *   **Target:** Minimal Debian + `systemd-nspawn` + `greetd`.
 *   **Goal:** Boot a containerized DE as a primary session.
+
+---
+## 7. Extensions & cosmic-utils Expansion (2026-04-02)
+*   **Validated Packages:** The `debian-testing-cosmic-utils-sysext` now includes `chronos`, `calculator`, `tasks`, and `app-hub`, successfully validated by local `systemd-nspawn` builds in the Debian Testing (`cosmic-build-chroot`) environment.
+*   **Rustc Limitations:** The `web-apps` (webapps) package currently fails to build on Debian Testing due to the `ashpd` dependency (v0.13.3) demanding `rustc >= 1.92`, whereas the environment currently ships `rustc 1.91.1` (or older). Packages with such bleeding-edge rustc requirements will be deferred from the standard sysext pipeline until the host compiler catches up.
 
