@@ -1,108 +1,52 @@
-# 🍻 Desktop Brewery: COSMIC for Debian
+# 🍻 Desktop Brewery
 
 [![Desktop Brewery - Build Images](https://github.com/rickysarraf/desktop-brewery/actions/workflows/build-images.yml/badge.svg)](https://github.com/rickysarraf/desktop-brewery/actions/workflows/build-images.yml)
 
-Welcome to the **Desktop Brewery** implementation of the [COSMIC Desktop Environment](https://github.com/pop-os/cosmic) for Debian.
-
-This project uses an **"Atomic Switchboard"** approach to deliver a modern, rolling-release COSMIC DE experience on Debian Testing/Sid without polluting your host's root filesystem.
+Welcome to the **Desktop Brewery**. This project provides a collection of Docker-based "recipes" and orchestration tools to build, test, and run various Desktop Environments in isolation.
 
 ---
 
-## 🏗️ Build Pipeline Overview
+## 🏗️ Architecture
 
-To ensure peak performance and stability, we maintain a automated, high-rigor build pipeline.
+The Brewery uses a containerized approach to deliver modern desktop experiences without polluting your host's root filesystem.
 
-### What is built?
-We build two primary `systemd-sysext` (System Extension) images:
-- **`cosmic`**: The Core Desktop Environment (Compositor, Panel, Settings, Launcher).
-- **`cosmic-utils`**: Essential community applications (Terminal, Files, Editor).
-- **`cosmic-canary`**: A Just-In-Time (JIT) ABI safety package used to verify host compatibility.
-
-### When is it built?
-- **Weekly Cycle:** A full, fresh build is triggered every **Friday at 18:00 UTC**.
-- **On-Demand:** Builds are also triggered automatically on every push to the `main` branch or via manual workflow dispatch.
-
-### How is it built?
-1.  **Isolated Base:** We use **Debian Testing** as the foundation, ensuring a modern but sane library stack.
-2.  **Chroot Isolation:** Builds occur inside a sanitized **Debian Testing chroot** via `systemd-nspawn`. This prevents host contamination and ensures absolute reproducibility.
-3.  **No-Cache Freshness:** All CI builds are executed with `no-cache: true` to ensure every release is built against the absolute latest state of Debian Testing.
-4.  **OCI Delivery:** Binaries are extracted, sanitized, and packaged into OCI images delivered via the **GitHub Container Registry (GHCR)**.
+### Supported Distributions & Desktops
+We maintain recipes for several combinations:
+- **Fedora COSMIC**
+- **Pop!_OS COSMIC**
+- **Debian GNOME/KDE**
+- **Ubuntu Stable**
+- **Arch KDE**
+- **Elementary Pantheon**
 
 ---
 
 ## 🛠️ Helper Scripts
 
-We have provided two primary helper scripts in the `bin/` directory to manage your COSMIC installation.
+We provide several scripts in the `scripts/` directory to manage and run these containerized desktops:
 
-### 1. `cosmic-update`
-This script automates the retrieval and sanitization of the COSMIC extensions from GHCR.
-
-- **Pristine Host Mode:** It unmerges any active extensions before updating to ensure your `/usr` remains pristine.
-- **Sanitization:** It automatically removes conflicting host binaries (like `env`, `sh`, `bash`) from the extension to prevent recursion loops.
-- **Usage:**
-  ```bash
-  # Update just the Core DE
-  ./bin/cosmic-update
-
-  # Update the full stack (Core + Community Utils)
-  ./bin/cosmic-update utils
-  ```
-
-### 2. `cosmic-toggle`
-This script manages the lifecycle of the COSMIC extension on your host.
-
-- **ABI Safety Check:** Before activation, it verifies the **JIT Canary** (`cosmic-canary`) is installed and healthy to ensure your host's libraries are compatible with the extension.
-- **Usage:**
-  ```bash
-  # Activate COSMIC
-  ./bin/cosmic-toggle on
-
-  # Revert to stock Debian
-  ./bin/cosmic-toggle off
-
-  # Check current state
-  ./bin/cosmic-toggle status
-  ```
-
----
-
-## 🛡️ Safety: The JIT Canary
-
-Because COSMIC is built in an isolated chroot, there is a risk of **ABI Drift** if your host system lags too far behind the build base (Debian Testing).
-
-To mitigate this, we use the **`cosmic-canary`** package.
-- It acts as a Just-In-Time (JIT) dependency check.
-- If your host system has unmet dependencies or library versions that would cause COSMIC to crash, the `cosmic-toggle` script will detect the failure and refuse to merge the extension.
-
----
-
-## 📦 Getting Started
-
-### 1. Prerequisites
-- **systemd** >= 248
-- **Docker** (required for `cosmic-update` to pull images)
-- **Debian Testing or Sid** host.
-
-### 2. Install the Canary
-Install the `cosmic-canary` `.deb` package provided in our [Releases](https://github.com/rickysarraf/desktop-brewery/releases) page.
-
-### 3. Fetch and Activate
+### 1. `brewery-run.sh`
+Launches a containerized desktop session nested within your current Wayland session.
 ```bash
-# Clone this repository
-git clone https://github.com/rickysarraf/desktop-brewery.git
-cd desktop-brewery
-
-# Pull the latest weekly build
-./bin/cosmic-update utils
-
-# Activate the session
-./bin/cosmic-toggle on
+./scripts/brewery-run.sh ghcr.io/rickysarraf/fedora-cosmic cosmic-session
 ```
 
-### 4. Login
-Log out of your current session and select **COSMIC** from your Display Manager (GDM, SDDM, or greetd).
+### 2. `brewery-nested.sh`
+Helper for nested session configuration.
+
+---
+
+## 📦 Building Locally
+
+You can build any of the images locally using Docker:
+```bash
+docker build -t my-desktop ./fedora-cosmic
+```
 
 ---
 
 ## 🤝 Contributing
-For developers looking to modify the build recipes or chroot logic, please refer to the subdirectories (e.g., `debian-testing-cosmic-sysext`). Contributions to the `justfile` logic or documentation are highly encouraged!
+
+Contributions of new desktop recipes or improvements to the orchestration scripts are welcome! Please ensure that new recipes follow the "Pristine Host" principle.
+
+For the **Debian COSMIC** specialized project, please see the [debian-cosmic](https://github.com/rickysarraf/debian-cosmic) repository.

@@ -8,11 +8,8 @@ on:
       - '.github/workflows/**'
   pull_request:
     branches: [ "main" ]
-    paths:
-      - '**'
-      - '.github/workflows/**'
   schedule:
-    - cron: '0 18 * * 5' # Weekly build on Friday at 18:00 UTC (11:30 PM IST)
+    - cron: '0 18 * * 5' # Weekly build on Friday
   workflow_dispatch:
 
 env:
@@ -26,12 +23,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: debian-testing-cosmic-sysext
-            context: debian-testing-cosmic-sysext
-            image: debian-testing-cosmic-sysext
-          - name: debian-testing-cosmic-utils-sysext
-            context: debian-testing-cosmic-utils-sysext
-            image: debian-testing-cosmic-utils-sysext
+          - name: fedora-cosmic
+            context: fedora-cosmic
+            image: fedora-cosmic
+          - name: pop-os-cosmic
+            context: pop-os-cosmic
+            image: pop-os-cosmic
+          - name: arch-kde
+            context: arch-kde
+            image: arch-kde
+          - name: debian-sid-gnome
+            context: debian-sid-gnome
+            image: debian-sid-gnome
+          - name: ubuntu-stable
+            context: ubuntu-stable
+            image: ubuntu-stable
 
     permissions:
       contents: read
@@ -67,6 +73,4 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # CACHE DISCARDED: StandardFresh builds only.
-          # This prevents token timeouts and simplifies the pipeline.
           no-cache: true
